@@ -216,6 +216,48 @@ func GetCodeBuddyModels() []*ModelInfo {
 			MaxCompletionTokens: 32768,
 			SupportedEndpoints:  []string{"/chat/completions"},
 		},
+		{
+			ID:                  "deepseek-v4-pro",
+			Object:              "model",
+			Created:             now,
+			OwnedBy:             "tencent",
+			Type:                "codebuddy",
+			DisplayName:         "DeepSeek V4 Pro",
+			Description:         "DeepSeek V4 Pro via CodeBuddy",
+			ContextLength:       1048576,
+			MaxCompletionTokens: 393216,
+			Thinking: &ThinkingSupport{
+				Levels: []string{"low", "medium", "high", "max"},
+			},
+			SupportedEndpoints:  []string{"/chat/completions"},
+		},
+		{
+			ID:                  "deepseek-v4-flash",
+			Object:              "model",
+			Created:             now,
+			OwnedBy:             "tencent",
+			Type:                "codebuddy",
+			DisplayName:         "DeepSeek V4 Flash",
+			Description:         "DeepSeek V4 Flash via CodeBuddy",
+			ContextLength:       1048576,
+			MaxCompletionTokens: 393216,
+			Thinking: &ThinkingSupport{
+				Levels: []string{"low", "medium", "high", "max"},
+			},
+			SupportedEndpoints:  []string{"/chat/completions"},
+		},
+		{
+			ID:                  "kimi-k2.6",
+			Object:              "model",
+			Created:             now,
+			OwnedBy:             "tencent",
+			Type:                "codebuddy",
+			DisplayName:         "Kimi K2.6",
+			Description:         "Kimi K2.6 via CodeBuddy",
+			ContextLength:       256000,
+			MaxCompletionTokens: 32768,
+			SupportedEndpoints:  []string{"/chat/completions"},
+		},
 	}
 }
 

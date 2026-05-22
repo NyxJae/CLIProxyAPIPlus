@@ -151,6 +151,8 @@ func (e *CodeBuddyExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth
 		return resp, err
 	}
 
+	translated = ensureDeepSeekReasoningContent(translated, baseModel)
+
 	url := codeBuddyBaseURL(e, auth) + codeBuddyChatPath
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(translated))
 	if err != nil {
@@ -247,6 +249,8 @@ func (e *CodeBuddyExecutor) ExecuteStream(ctx context.Context, auth *cliproxyaut
 	if err != nil {
 		return nil, err
 	}
+
+	translated = ensureDeepSeekReasoningContent(translated, baseModel)
 
 	url := codeBuddyBaseURL(e, auth) + codeBuddyChatPath
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(translated))
@@ -737,4 +741,44 @@ func convertCodeBuddyImageResponse(data []byte, model string) []byte {
 
 	out, _ := json.Marshal(openAIResp)
 	return out
+}
+
+// ensureDeepSeekReasoningContent ensures that assistant messages with tool_calls
+// always include reasoning_content. DeepSeek V4 thinking mode requires this
+// field to be present in all subsequent turns after a tool-call turn.
+// See reasoning_content auto-fill requirement in docs.
+func ensureDeepSeekReasoningContent(body []byte, model string) []byte {
+	if !strings.HasPrefix(model, "deepseek-v4") {
+		return body
+	}
+	messages := gjson.GetBytes(body, "messages")
+	if !messages.Exists() || !messages.IsArray() {
+		return body
+	}
+
+	var fixIndices []int
+	messages.ForEach(func(key, value gjson.Result) bool {
+		if value.Get("role").String() != "assistant" {
+			return true
+		}
+		if !value.Get("tool_calls").Exists() || !value.Get("tool_calls").IsArray() {
+			return true
+		}
+		if value.Get("reasoning_content").Exists() {
+			return true
+		}
+		fixIndices = append(fixIndices, int(key.Int()))
+		return true
+	})
+
+	if len(fixIndices) == 0 {
+		return body
+	}
+
+	result := body
+	for _, idx := range fixIndices {
+		path := fmt.Sprintf("messages.%d.reasoning_content", idx)
+		result, _ = sjson.SetBytes(result, path, "")
+	}
+	return result
 }
